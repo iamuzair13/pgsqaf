@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3006",
     "lint": "next lint",
-    "seed:admin": "tsx scripts/seed-super-admin.ts"
+    "seed:admin": "tsx scripts/seed-super-admin.ts",
+    "migrate:submissions": "tsx scripts/migrate-add-submissions.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

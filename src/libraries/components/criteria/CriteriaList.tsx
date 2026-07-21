@@ -53,22 +53,7 @@ export function CriteriaList({ frameworkId, loading = false }: CriteriaListProps
   return (
     <div className="space-y-5">
       {/* Weight validation strip */}
-      {criterias.length > 0 && (
-        <div
-          className={cn(
-            "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm",
-            weightValid
-              ? "bg-green-500/10 text-green-700 dark:text-green-400"
-              : "bg-destructive/10 text-destructive"
-          )}
-          role="status"
-          aria-live="polite"
-        >
-          {weightValid
-            ? "Total weight is exactly 100%"
-            : `Total weight is ${totalWeight.toFixed(1)}% — must equal 100%`}
-        </div>
-      )}
+      
 
       {/* Toolbar */}
       <div className="flex items-center justify-between">

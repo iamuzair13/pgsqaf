@@ -418,6 +418,7 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
   const [facultyFilter, setFacultyFilter] = React.useState("All")
   const [departmentFilter, setDepartmentFilter] = React.useState("All")
   const [programFilter, setProgramFilter] = React.useState("All")
+  const [showFilters, setShowFilters] = React.useState(false)
   const [sortKey, setSortKey] = React.useState<SortKey>("date")
   const [sortDir, setSortDir] = React.useState<SortDir>("desc")
 
@@ -489,71 +490,94 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* ── Toolbar ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Search applicants, SAP IDs, emails…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className={cn(
-              "w-full h-9 pl-8 pr-3 rounded-lg border border-border bg-background text-sm",
-              "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring/60",
-              "transition-all duration-150"
-            )}
-          />
+      <div className="rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.025)]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search */}
+          <div className="relative w-full sm:max-w-md">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              placeholder="Search by applicant, SAP ID, email, or program"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={cn(
+                "h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm",
+                "placeholder:text-muted-foreground focus:border-ring/60 focus:outline-none focus:ring-2 focus:ring-ring/20",
+                "transition-all duration-150"
+              )}
+            />
+          </div>
+          <Button
+            variant={showFilters || activeFilters > 0 ? "secondary" : "outline"}
+            size="sm"
+            className="shrink-0"
+            onClick={() => setShowFilters(value => !value)}
+          >
+            <Filter size={14} />
+            Filters
+            {activeFilters > 0 && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[0.625rem] text-primary-foreground">{activeFilters}</span>}
+          </Button>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <FilterDropdown
-            label="Status"
-            icon={ListFilter}
-            value={statusFilter}
-            options={statusOptions}
-            onChange={v => setStatusFilter(v as Status | "All")}
-          />
-          <FilterDropdown
-            label="Faculty"
-            icon={Building2}
-            value={facultyFilter}
-            options={facultyOptions}
-            onChange={setFacultyFilter}
-          />
-          <FilterDropdown
-            label="Department"
-            icon={Layers}
-            value={departmentFilter}
-            options={departmentOptions}
-            onChange={setDepartmentFilter}
-          />
-          <FilterDropdown
-            label="Program"
-            icon={BookMarked}
-            value={programFilter}
-            options={programOptions}
-            onChange={setProgramFilter}
-          />
-          {activeFilters > 0 && (
-            <button
-              onClick={() => {
-                setStatusFilter("All")
-                setFacultyFilter("All")
-                setDepartmentFilter("All")
-                setProgramFilter("All")
-              }}
-              className={cn(
-                "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border text-xs font-medium",
-                "text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150"
-              )}
+        <AnimatePresence initial={false}>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-visible"
             >
-              <X size={12} />
-              Clear
-            </button>
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
+                <FilterDropdown
+                  label="Status"
+                  icon={ListFilter}
+                  value={statusFilter}
+                  options={statusOptions}
+                  onChange={v => setStatusFilter(v as Status | "All")}
+                />
+                <FilterDropdown
+                  label="Faculty"
+                  icon={Building2}
+                  value={facultyFilter}
+                  options={facultyOptions}
+                  onChange={setFacultyFilter}
+                />
+                <FilterDropdown
+                  label="Department"
+                  icon={Layers}
+                  value={departmentFilter}
+                  options={departmentOptions}
+                  onChange={setDepartmentFilter}
+                />
+                <FilterDropdown
+                  label="Program"
+                  icon={BookMarked}
+                  value={programFilter}
+                  options={programOptions}
+                  onChange={setProgramFilter}
+                />
+                {activeFilters > 0 && (
+                  <button
+                    onClick={() => {
+                      setStatusFilter("All")
+                      setFacultyFilter("All")
+                      setDepartmentFilter("All")
+                      setProgramFilter("All")
+                    }}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium",
+                      "text-muted-foreground transition-colors duration-150 hover:bg-muted/50 hover:text-foreground"
+                    )}
+                  >
+                    <X size={12} />
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
 
       {/* ── Table card ── */}
@@ -570,19 +594,16 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-sm">
+          <table className="w-full min-w-[920px] text-sm">
             <thead>
-              <tr className="border-b border-border/60 bg-muted/10">
-                <SortTh label="SAP ID" sortKey="sapId" current={sortKey} dir={sortDir} onSort={handleSort} className="pl-5" />
-                <SortTh label="Name" sortKey="name" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Email" sortKey="email" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <tr className="border-b border-border/60 bg-muted/20">
+                <SortTh label="Applicant" sortKey="name" current={sortKey} dir={sortDir} onSort={handleSort} className="pl-5" />
                 <SortTh label="Status" sortKey="status" current={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortTh label="Score" sortKey="score" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Submission" sortKey="date" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Faculty" sortKey="faculty" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Department" sortKey="department" current={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortTh label="Submitted" sortKey="date" current={sortKey} dir={sortDir} onSort={handleSort} />
+                <SortTh label="Organization" sortKey="faculty" current={sortKey} dir={sortDir} onSort={handleSort} />
                 <SortTh label="Program" sortKey="program" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <th className="px-4 py-3 w-28" />
+                <th className="w-24 px-4 py-3" />
               </tr>
             </thead>
 
@@ -590,21 +611,18 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-border/40">
-                    <td className="px-5 py-4"><Skeleton className="h-3 w-24" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-32" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-40" /></td>
+                    <td className="px-5 py-4"><Skeleton className="h-8 w-44" /></td>
                     <td className="px-4 py-4"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-12" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-24" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-44" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-44" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-3 w-32" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-6 w-20 rounded" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-12" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-8 w-44" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="px-4 py-4"><Skeleton className="h-7 w-20 rounded" /></td>
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <FileText size={32} className="mx-auto mb-3 text-muted-foreground/40" strokeWidth={1.5} />
                     <p className="text-sm font-medium text-foreground">No appraisals found</p>
                     <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or filter.</p>
@@ -626,19 +644,17 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
                           "hover:bg-muted/30 transition-colors duration-150"
                         )}
                       >
-                        {/* SAP ID */}
-                        <td className="px-5 py-3.5">
-                          <span className="text-sm font-medium text-foreground tabular-nums">{item.sapId}</span>
-                        </td>
-
-                        {/* Name */}
-                        <td className="px-4 py-3.5">
-                          <p className="font-medium text-foreground">{item.name}</p>
-                        </td>
-
-                        {/* Email */}
-                        <td className="px-4 py-3.5">
-                          <p className="text-sm text-muted-foreground truncate">{item.email}</p>
+                        {/* Applicant */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/8 text-xs font-semibold text-primary">
+                              {item.name.split(" ").map(part => part[0]).join("").slice(0, 2)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground">{item.name}</p>
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.sapId} · {item.email}</p>
+                            </div>
+                          </div>
                         </td>
 
                         {/* Status */}
@@ -653,38 +669,32 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
                         </td>
 
                         {/* Score */}
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-4">
                           {item.score !== null ? (
-                            <span className="text-sm font-bold tabular-nums">
-                              {item.score} <span className="text-muted-foreground w-20 font-medium">({item.score}%)</span>
-                            </span>
+                            <span className="text-sm font-semibold tabular-nums">{item.score}%</span>
                           ) : (
-                            <span className="text-xs text-muted-foreground italic">—</span>
+                            <span className="text-xs text-muted-foreground">Not scored</span>
                           )}
                         </td>
 
                         {/* Date of Submission */}
-                        <td className="px-4 py-3.5">
-                          <p className="text-xs font-medium text-foreground">{format(item.date, "dd MMM yyyy")}</p>
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-foreground">{format(item.date, "dd MMM yyyy")}</p>
                         </td>
 
-                        {/* Faculty */}
-                        <td className="px-4 py-3.5">
-                          <p className="text-xs text-foreground">{item.faculty}</p>
-                        </td>
-
-                        {/* Department */}
-                        <td className="px-4 py-3.5">
-                          <p className="text-xs text-foreground">{item.department}</p>
+                        {/* Organization */}
+                        <td className="max-w-[240px] px-4 py-4">
+                          <p className="truncate text-sm text-foreground">{item.faculty}</p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.department}</p>
                         </td>
 
                         {/* Program */}
-                        <td className="px-4 py-3.5">
-                          <p className="text-xs text-foreground">{item.program}</p>
+                        <td className="px-4 py-4">
+                          <p className="text-sm text-foreground">{item.program}</p>
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-4">
                           <ActionCell />
                         </td>
                       </motion.tr>

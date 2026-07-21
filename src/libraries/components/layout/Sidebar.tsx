@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   GraduationCap,
+  UserCircle,
   X,
   Moon,
   Sun,
@@ -34,7 +35,10 @@ const navGroups = [
   },
   {
     label: "Management",
-    items: [{ label: "Frameworks", href: "/frameworks", icon: BookOpen }],
+    items: [
+      { label: "Frameworks", href: "/frameworks", icon: BookOpen },
+      { label: "User Profile", href: "/profile", icon: UserCircle },
+    ],
   },
   {
     label: "System",

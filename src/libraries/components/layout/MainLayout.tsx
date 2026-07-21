@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, ClipboardList, Settings, Menu } from "lucide-react";
+import { LayoutDashboard, BookOpen, UserCircle, Settings, Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 const mobileNav = [
   { label: "Dashboard",  href: "/",           icon: LayoutDashboard },
   { label: "Frameworks", href: "/frameworks",  icon: BookOpen },
-  { label: "Appraisals", href: "/appraisals",  icon: ClipboardList },
+  { label: "Profile",    href: "/profile",     icon: UserCircle },
   { label: "Settings",   href: "/settings",    icon: Settings },
 ];
 

@@ -146,3 +146,65 @@ export interface FrameworkAssignment {
   program_name?: string;
   created_at?: string;
 }
+
+export type SubmissionStatus = "DRAFT" | "SUBMITTED";
+
+export interface ErpProfile {
+  erp_id: string;
+  name: string;
+  email: string;
+  registration_no: string;
+  faculty: string;
+  department: string;
+  program: string;
+  level: string;
+  semester: string;
+  campus: string;
+  status: string;
+}
+
+export interface SubmissionSummary {
+  id: number;
+  framework_id: number;
+  framework_title: string;
+  framework_version: string;
+  status: SubmissionStatus;
+  progress: number;
+  total_score: number | null;
+  answered_count: number;
+  indicator_count: number;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubmissionAnswer {
+  indicator_id: number;
+  rubric_id: number | null;
+  score: number | null;
+  response: string;
+  attachment_name: string | null;
+  attachment_type: string | null;
+  attachment_data?: string | null;
+}
+
+export interface SubmissionIndicator extends Indicator {
+  answer: SubmissionAnswer | null;
+}
+
+export interface SubmissionCriteria extends Criteria {
+  indicators: SubmissionIndicator[];
+  rubrics: Rubric[];
+}
+
+export interface SubmissionDetail extends SubmissionSummary {
+  erp_id: string;
+  student_name: string;
+  student_email: string;
+  registration_no: string;
+  faculty: string;
+  department: string;
+  program: string;
+  framework_description: string;
+  criteria: SubmissionCriteria[];
+}
