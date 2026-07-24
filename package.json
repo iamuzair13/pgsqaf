@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start --port 3006",
+    "dev": "node api.js && next dev",
+    "build": "node api.js && next build",
+    "start": "node api.js && next start --port 3006",
     "lint": "next lint",
     "seed:admin": "tsx scripts/seed-super-admin.ts",
     "migrate:submissions": "tsx scripts/migrate-add-submissions.ts"
