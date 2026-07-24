@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "@auth/core/providers/google";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { query } from "@/lib/db";
 import { fetchSapStudent, extractSapIdFromEmail } from "@/lib/sap";
