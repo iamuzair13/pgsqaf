@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 import type { Program } from "@/types"
 
 // GET /api/programs?department_id=X
 export async function GET(req: NextRequest) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const { searchParams } = new URL(req.url)
     const departmentId = searchParams.get("department_id")
@@ -34,6 +38,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/programs
 export async function POST(req: NextRequest) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const body = await req.json()
     const { department_id, name, code, level, duration_years, description } = body as {

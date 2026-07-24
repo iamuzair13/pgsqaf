@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
-import { dummyErpProfile } from "@/lib/dummy-profile"
+import { fetchSapStudent } from "@/lib/sap"
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const sapId = (session.user as { sapId?: string }).sapId
+    if (!sapId) {
+      return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
+    }
+
     const body = await req.json()
     const frameworkId = Number(body.framework_id)
 
@@ -23,10 +34,16 @@ export async function POST(req: NextRequest) {
       `SELECT id FROM submissions
        WHERE erp_id = $1 AND framework_id = $2 AND status = 'DRAFT'
        ORDER BY updated_at DESC LIMIT 1`,
-      [dummyErpProfile.erp_id, frameworkId]
+      [sapId, frameworkId]
     )
     if (existing.length) {
       return NextResponse.json({ id: existing[0].id, existing: true })
+    }
+
+    // Fetch student data from SAP for submission metadata
+    const student = await fetchSapStudent(sapId)
+    if (!student) {
+      return NextResponse.json({ error: "Student record not found" }, { status: 404 })
     }
 
     const rows = await query<{ id: number }>(
@@ -35,13 +52,13 @@ export async function POST(req: NextRequest) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [
-        dummyErpProfile.erp_id,
-        dummyErpProfile.name,
-        dummyErpProfile.email,
-        dummyErpProfile.registration_no,
-        dummyErpProfile.faculty,
-        dummyErpProfile.department,
-        dummyErpProfile.program,
+        sapId,
+        student.name,
+        student.email ?? session.user.email,
+        "",
+        "",
+        student.department ?? "",
+        student.program ?? "",
         frameworkId,
       ]
     )

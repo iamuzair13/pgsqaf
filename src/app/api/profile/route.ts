@@ -1,9 +1,43 @@
 import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
-import { dummyErpProfile } from "@/lib/dummy-profile"
+import { fetchSapStudent } from "@/lib/sap"
+import type { ErpProfile } from "@/types"
 
 export async function GET() {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const sapId = (session.user as { sapId?: string }).sapId
+    if (!sapId) {
+      return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
+    }
+
+    // Fetch fresh student data from SAP
+    const student = await fetchSapStudent(sapId)
+    if (!student) {
+      return NextResponse.json({ error: "Student record not found" }, { status: 404 })
+    }
+
+    const profile: ErpProfile = {
+      erp_id: student.sapId,
+      name: student.name,
+      email: student.email ?? session.user.email,
+      program: student.program ?? "",
+      department: student.department ?? "",
+      campus: student.campus ?? "",
+      admission_year: student.admissionYear ?? "",
+      academic_year: student.academicYear ?? "",
+      gender: student.gender ?? "",
+      father_name: student.fatherName ?? "",
+      mobile: student.mobile ?? "",
+      address: student.address ?? "",
+      nationality: student.nationality ?? "",
+    }
+
     const frameworks = await query(
       `SELECT f.id, f.title, f.description, f.version, f.updated_at,
               COUNT(DISTINCT c.id)::int AS criteria_count,
@@ -31,10 +65,10 @@ export async function GET() {
        WHERE s.erp_id = $1
        GROUP BY s.id, f.id
        ORDER BY s.updated_at DESC`,
-      [dummyErpProfile.erp_id]
+      [student.sapId]
     )
 
-    return NextResponse.json({ profile: dummyErpProfile, frameworks, submissions })
+    return NextResponse.json({ profile, frameworks, submissions })
   } catch (error) {
     console.error("[GET /api/profile]", error)
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 })

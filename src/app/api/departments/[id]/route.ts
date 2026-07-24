@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 import type { Department } from "@/types"
 
 // PATCH /api/departments/[id]
@@ -7,6 +8,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const { id } = await params
     const deptId = parseInt(id, 10)
@@ -63,6 +67,9 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const { id } = await params
     const deptId = parseInt(id, 10)

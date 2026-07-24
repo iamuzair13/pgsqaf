@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Building2, CalendarDays, ChevronRight, FileCheck2, GraduationCap, IdCard, Mail, MapPin, Play, Trash2 } from "lucide-react";
+import { BookOpen, CalendarDays, ChevronRight, FileCheck2, IdCard, Mail, MapPin, Play, Trash2, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { ErpProfile, SubmissionSummary } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -111,7 +111,7 @@ export function UserProfile() {
   if (error || !data) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center">
-        <p className="font-medium">Unable to load the test profile</p>
+        <p className="font-medium">Unable to load profile</p>
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button variant="outline" onClick={() => { setLoading(true); void load(); }}>Try again</Button>
       </div>
@@ -133,14 +133,13 @@ export function UserProfile() {
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight">{profile.name}</h1>
-              <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">{profile.status}</Badge>
-              <Badge variant="outline">ERP test profile</Badge>
+              <Badge className="bg-primary/10 text-primary">Student</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">{profile.program} · {profile.semester}</p>
+            <p className="text-sm text-muted-foreground">{profile.program || "N/A"} · {profile.department || "N/A"}</p>
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><IdCard size={14} />{profile.registration_no}</span>
+              <span className="flex items-center gap-1.5"><IdCard size={14} />{profile.erp_id}</span>
               <span className="flex items-center gap-1.5"><Mail size={14} />{profile.email}</span>
-              <span className="flex items-center gap-1.5"><MapPin size={14} />{profile.campus}</span>
+              <span className="flex items-center gap-1.5"><MapPin size={14} />{profile.campus || "N/A"}</span>
             </div>
           </div>
         </CardContent>
@@ -224,11 +223,24 @@ export function UserProfile() {
 
         <Card hover={false} className="h-fit min-w-0">
           <CardHeader><CardTitle>Academic details</CardTitle></CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <Detail icon={Building2} label="Faculty" value={profile.faculty} />
-            <Detail icon={GraduationCap} label="Department" value={profile.department} />
-            <Detail icon={BookOpen} label="Program" value={profile.program} />
-            <Detail icon={IdCard} label="ERP identifier" value={profile.erp_id} />
+          <CardContent className="space-y-5 text-sm">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Detail icon={CalendarDays} label="Admission Year" value={profile.admission_year} />
+              <Detail icon={CalendarDays} label="Academic Year" value={profile.academic_year} />
+            </div>
+            <div className="border-t pt-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Personal</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Detail icon={UserCircle} label="Gender" value={profile.gender === "M" ? "Male" : profile.gender === "F" ? "Female" : profile.gender} />
+                <Detail icon={UserCircle} label="Father's Name" value={profile.father_name} />
+                <Detail icon={Mail} label="Mobile" value={profile.mobile} />
+                <Detail icon={IdCard} label="Nationality" value={profile.nationality} />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact</p>
+              <Detail icon={MapPin} label="Address" value={profile.address} />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -248,10 +260,11 @@ function StatCard({ icon: Icon, label, value }: { icon: React.ElementType; label
 }
 
 function Detail({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  const display = value?.trim() ? value : "N/A";
   return (
     <div className="flex gap-3">
       <Icon size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
-      <div><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 font-medium leading-snug">{value}</p></div>
+      <div><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 font-medium leading-snug">{display}</p></div>
     </div>
   );
 }

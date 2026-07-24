@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
 import pool from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 
 export async function POST(req: NextRequest) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const body = await req.json()
     const { header, criterias, assignment } = body as {
@@ -169,6 +173,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const rows = await query(
       `SELECT f.id, f.title, f.description, f.status, f.version,

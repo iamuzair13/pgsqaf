@@ -4,21 +4,29 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, BookOpen, UserCircle, Settings, Menu } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { Sidebar } from "./Sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const mobileNav = [
+const adminMobileNav = [
   { label: "Dashboard",  href: "/",           icon: LayoutDashboard },
   { label: "Frameworks", href: "/frameworks",  icon: BookOpen },
   { label: "Profile",    href: "/profile",     icon: UserCircle },
   { label: "Settings",   href: "/settings",    icon: Settings },
 ];
 
+const studentMobileNav = [
+  { label: "Profile", href: "/profile", icon: UserCircle },
+];
+
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const isStudent = (session?.user as { role?: string } | undefined)?.role === "STUDENT";
+  const mobileNav = status === "loading" ? [] : isStudent ? studentMobileNav : adminMobileNav;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">

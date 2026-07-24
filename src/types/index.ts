@@ -1,5 +1,5 @@
 export type FrameworkStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
-export type UserRole = "SUPER_ADMIN" | "ADMIN";
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "STUDENT";
 
 export interface User {
   id: number;
@@ -153,14 +153,16 @@ export interface ErpProfile {
   erp_id: string;
   name: string;
   email: string;
-  registration_no: string;
-  faculty: string;
-  department: string;
   program: string;
-  level: string;
-  semester: string;
+  department: string;
   campus: string;
-  status: string;
+  admission_year: string;
+  academic_year: string;
+  gender: string;
+  father_name: string;
+  mobile: string;
+  address: string;
+  nationality: string;
 }
 
 export interface SubmissionSummary {
@@ -207,4 +209,48 @@ export interface SubmissionDetail extends SubmissionSummary {
   program: string;
   framework_description: string;
   criteria: SubmissionCriteria[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  SAP Student (OData response)                                      */
+/* ------------------------------------------------------------------ */
+
+export interface SapStudent {
+  sapId: string;
+  name: string;
+  email: string | null;
+  program: string | null;
+  department: string | null;
+  campus: string | null;
+  admissionYear: string | null;
+  academicYear: string | null;
+  gender: string | null;
+  fatherName: string | null;
+  mobile: string | null;
+  address: string | null;
+  nationality: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  NextAuth session augmentation                                     */
+/* ------------------------------------------------------------------ */
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      sapId?: string;
+    }
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+    sapId?: string;
+  }
 }

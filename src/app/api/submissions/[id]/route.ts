@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import pool, { query } from "@/lib/db"
-import { dummyErpProfile } from "@/lib/dummy-profile"
+import { auth } from "@/lib/auth"
 
 type AnswerInput = {
   indicator_id: number
@@ -23,6 +23,15 @@ export async function GET(
   }
 
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const sapId = (session.user as { sapId?: string }).sapId
+    if (!sapId) {
+      return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
+    }
+
     const submissions = await query<Record<string, unknown>>(
       `SELECT s.*, f.title AS framework_title, f.version AS framework_version,
               f.description AS framework_description,
@@ -35,7 +44,7 @@ export async function GET(
        LEFT JOIN submission_answers sa ON sa.submission_id = s.id AND sa.indicator_id = i.id
        WHERE s.id = $1 AND s.erp_id = $2
        GROUP BY s.id, f.id`,
-      [submissionId, dummyErpProfile.erp_id]
+      [submissionId, sapId]
     )
     if (!submissions.length) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 })
@@ -114,6 +123,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid submission" }, { status: 400 })
   }
 
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const sapId = (session.user as { sapId?: string }).sapId
+  if (!sapId) {
+    return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
+  }
+
   const client = await pool.connect()
   try {
     const body = await req.json() as { action?: "save" | "submit"; answers?: AnswerInput[] }
@@ -124,7 +142,7 @@ export async function PATCH(
     const submissionResult = await client.query(
       `SELECT id, framework_id, status FROM submissions
        WHERE id = $1 AND erp_id = $2 FOR UPDATE`,
-      [submissionId, dummyErpProfile.erp_id]
+      [submissionId, sapId]
     )
     if (!submissionResult.rows.length) {
       await client.query("ROLLBACK")
@@ -271,9 +289,18 @@ export async function DELETE(
   }
 
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const sapId = (session.user as { sapId?: string }).sapId
+    if (!sapId) {
+      return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
+    }
+
     const rows = await query<{ id: number }>(
       "DELETE FROM submissions WHERE id = $1 AND erp_id = $2 AND status = 'DRAFT' RETURNING id",
-      [submissionId, dummyErpProfile.erp_id]
+      [submissionId, sapId]
     )
     if (!rows.length) {
       return NextResponse.json({ error: "Only draft submissions can be deleted" }, { status: 409 })

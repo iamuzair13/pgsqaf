@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   const { id } = await params
   const frameworkId = parseInt(id)
 

@@ -488,9 +488,9 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
   const activeFilters = [statusFilter, facultyFilter, departmentFilter, programFilter].filter(v => v !== "All").length
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="rounded-xl border border-border/70 bg-card overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.025)]">
       {/* ── Toolbar ── */}
-      <div className="rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.025)]">
+      <div className="border-b border-border/60 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative w-full sm:max-w-md">
@@ -580,142 +580,139 @@ export function AppraisalList({ loading = false }: AppraisalListProps) {
         </AnimatePresence>
       </div>
 
-      {/* ── Table card ── */}
-      <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-        {/* Table header meta */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border/60 bg-muted/20">
-          <p className="text-xs text-muted-foreground">
-            {loading ? "Loading…" : <><span className="font-semibold text-foreground">{filtered.length}</span> appraisal{filtered.length !== 1 ? "s" : ""}</>}
-          </p>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Filter size={11} />
-            {activeFilters > 0 ? `${activeFilters} filter${activeFilters !== 1 ? "s" : ""} active` : "All filters"}
-          </div>
+      {/* ── Table header meta — part of the same container ── */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border/60 bg-muted/20">
+        <p className="text-xs text-muted-foreground">
+          {loading ? "Loading…" : <><span className="font-semibold text-foreground">{filtered.length}</span> appraisal{filtered.length !== 1 ? "s" : ""}</>}
+        </p>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Filter size={11} />
+          {activeFilters > 0 ? `${activeFilters} filter${activeFilters !== 1 ? "s" : ""} active` : "All filters"}
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-sm">
-            <thead>
-              <tr className="border-b border-border/60 bg-muted/20">
-                <SortTh label="Applicant" sortKey="name" current={sortKey} dir={sortDir} onSort={handleSort} className="pl-5" />
-                <SortTh label="Status" sortKey="status" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Score" sortKey="score" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Submitted" sortKey="date" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Organization" sortKey="faculty" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <SortTh label="Program" sortKey="program" current={sortKey} dir={sortDir} onSort={handleSort} />
-                <th className="w-24 px-4 py-3" />
-              </tr>
-            </thead>
-
-            <tbody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border/40">
-                    <td className="px-5 py-4"><Skeleton className="h-8 w-44" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-4 w-12" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-8 w-44" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-4 w-32" /></td>
-                    <td className="px-4 py-4"><Skeleton className="h-7 w-20 rounded" /></td>
-                  </tr>
-                ))
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-16 text-center">
-                    <FileText size={32} className="mx-auto mb-3 text-muted-foreground/40" strokeWidth={1.5} />
-                    <p className="text-sm font-medium text-foreground">No appraisals found</p>
-                    <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or filter.</p>
-                  </td>
-                </tr>
-              ) : (
-                <AnimatePresence initial={false}>
-                  {filtered.map((item, i) => {
-                    const cfg = statusConfig[item.status]
-                    return (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.03, ease: [0.4, 0, 0.2, 1] }}
-                        className={cn(
-                          "group border-b border-border/40 last:border-0",
-                          "hover:bg-muted/30 transition-colors duration-150"
-                        )}
-                      >
-                        {/* Applicant */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/8 text-xs font-semibold text-primary">
-                              {item.name.split(" ").map(part => part[0]).join("").slice(0, 2)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-foreground">{item.name}</p>
-                              <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.sapId} · {item.email}</p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-3.5">
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold border",
-                            cfg.classes
-                          )}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
-                            {cfg.label}
-                          </span>
-                        </td>
-
-                        {/* Score */}
-                        <td className="px-4 py-4">
-                          {item.score !== null ? (
-                            <span className="text-sm font-semibold tabular-nums">{item.score}%</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Not scored</span>
-                          )}
-                        </td>
-
-                        {/* Date of Submission */}
-                        <td className="px-4 py-4">
-                          <p className="text-sm text-foreground">{format(item.date, "dd MMM yyyy")}</p>
-                        </td>
-
-                        {/* Organization */}
-                        <td className="max-w-[240px] px-4 py-4">
-                          <p className="truncate text-sm text-foreground">{item.faculty}</p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.department}</p>
-                        </td>
-
-                        {/* Program */}
-                        <td className="px-4 py-4">
-                          <p className="text-sm text-foreground">{item.program}</p>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-4 py-4">
-                          <ActionCell />
-                        </td>
-                      </motion.tr>
-                    )
-                  })}
-                </AnimatePresence>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        {!loading && filtered.length > 0 && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border/60 bg-muted/10">
-            <p className="text-xs text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{filtered.length}</span> of{" "}
-              <span className="font-medium text-foreground">{appraisals.length}</span> appraisals
-            </p>
-          </div>
-        )}
       </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[920px] text-sm">
+          <thead>
+            <tr className="border-b border-border/60 bg-muted/20">
+              <SortTh label="Applicant" sortKey="name" current={sortKey} dir={sortDir} onSort={handleSort} className="pl-5" />
+              <SortTh label="Status" sortKey="status" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortTh label="Score" sortKey="score" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortTh label="Submitted" sortKey="date" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortTh label="Organization" sortKey="faculty" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <SortTh label="Program" sortKey="program" current={sortKey} dir={sortDir} onSort={handleSort} />
+              <th className="w-24 px-4 py-3" />
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border/40">
+                  <td className="px-5 py-4"><Skeleton className="h-8 w-44" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-4 w-12" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-4 w-24" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-8 w-44" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-4 w-32" /></td>
+                  <td className="px-4 py-4"><Skeleton className="h-7 w-20 rounded" /></td>
+                </tr>
+              ))
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-16 text-center">
+                  <FileText size={32} className="mx-auto mb-3 text-muted-foreground/40" strokeWidth={1.5} />
+                  <p className="text-sm font-medium text-foreground">No appraisals found</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or filter.</p>
+                </td>
+              </tr>
+            ) : (
+              <AnimatePresence initial={false}>
+                {filtered.map((item, i) => {
+                  const cfg = statusConfig[item.status]
+                  return (
+                    <motion.tr
+                      key={item.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, delay: i * 0.03, ease: [0.4, 0, 0.2, 1] }}
+                      className={cn(
+                        "group border-b border-border/40 last:border-0",
+                        "hover:bg-muted/30 transition-colors duration-150"
+                      )}
+                    >
+                      {/* Applicant */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/8 text-xs font-semibold text-primary">
+                            {item.name.split(" ").map(part => part[0]).join("").slice(0, 2)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground">{item.name}</p>
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.sapId} · {item.email}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3.5">
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold border",
+                          cfg.classes
+                        )}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full", cfg.dot)} />
+                          {cfg.label}
+                        </span>
+                      </td>
+
+                      {/* Score */}
+                      <td className="px-4 py-4">
+                        {item.score !== null ? (
+                          <span className="text-sm font-semibold tabular-nums">{item.score}%</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not scored</span>
+                        )}
+                      </td>
+
+                      {/* Date of Submission */}
+                      <td className="px-4 py-4">
+                        <p className="text-sm text-foreground">{format(item.date, "dd MMM yyyy")}</p>
+                      </td>
+
+                      {/* Organization */}
+                      <td className="max-w-[240px] px-4 py-4">
+                        <p className="truncate text-sm text-foreground">{item.faculty}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.department}</p>
+                      </td>
+
+                      {/* Program */}
+                      <td className="px-4 py-4">
+                        <p className="text-sm text-foreground">{item.program}</p>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-4">
+                        <ActionCell />
+                      </td>
+                    </motion.tr>
+                  )
+                })}
+              </AnimatePresence>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border/60 bg-muted/10">
+          <p className="text-xs text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{filtered.length}</span> of{" "}
+            <span className="font-medium text-foreground">{appraisals.length}</span> appraisals
+          </p>
+        </div>
+      )}
     </div>
   )
 }

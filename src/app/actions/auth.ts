@@ -23,6 +23,29 @@ export async function signInAction(email: string, password: string) {
   }
 }
 
+export async function studentTestSignInAction(sapId: string) {
+  try {
+    await nextAuthSignIn("student-test", {
+      sapId,
+      redirectTo: "/profile",
+    })
+  } catch (err) {
+    if (err instanceof AuthError) {
+      switch (err.type) {
+        case "CredentialsSignin":
+          return { error: "Student record not found. Please use your official University account." }
+        default:
+          return { error: "Something went wrong. Please try again." }
+      }
+    }
+    throw err
+  }
+}
+
+export async function googleSignInAction() {
+  await nextAuthSignIn("google", { redirectTo: "/profile" })
+}
+
 export async function signOutAction() {
   await nextAuthSignOut({ redirectTo: "/sign-in" })
 }

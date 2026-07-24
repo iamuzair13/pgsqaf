@@ -88,7 +88,7 @@ const colorMap = {
 function Sparkline({ data, color }: { data: number[]; color: keyof typeof colorMap }) {
   const c = colorMap[color]
   const w = 100
-  const h = 36
+  const h = 28
   const max = Math.max(...data)
   const min = Math.min(...data)
   const range = max - min || 1
@@ -102,7 +102,7 @@ function Sparkline({ data, color }: { data: number[]; color: keyof typeof colorM
   const areaPath = `${linePath} L ${w} ${h} L 0 ${h} Z`
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-9">
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-7 w-full">
       <defs>
         <linearGradient id={`spark-${color}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={c.line} stopOpacity="0.25" />
@@ -181,16 +181,16 @@ interface DashboardStatsProps {
 export function DashboardStats({ loading = false }: DashboardStatsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border/60 bg-card p-5 space-y-4">
+          <div key={i} className="rounded-xl border border-border/60 bg-card p-4 space-y-3">
             <div className="flex items-center justify-between">
               <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-8 w-8 rounded-lg" />
+              <Skeleton className="h-7 w-7 rounded-lg" />
             </div>
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-9 w-full rounded" />
-            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-7 w-full rounded" />
+            <Skeleton className="h-3 w-24" />
           </div>
         ))}
       </div>
@@ -198,7 +198,7 @@ export function DashboardStats({ loading = false }: DashboardStatsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, i) => {
         const c = colorMap[stat.color as keyof typeof colorMap]
         const Icon = stat.icon
@@ -214,26 +214,26 @@ export function DashboardStats({ loading = false }: DashboardStatsProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: i * 0.07, ease: [0.4, 0, 0.2, 1] }}
             className={cn(
-              "relative flex min-w-0 flex-col gap-4 overflow-hidden rounded-xl border border-border/70 bg-card p-5",
+              "relative flex min-w-0 flex-col gap-2.5 overflow-hidden rounded-xl border border-border/70 bg-card p-4",
               "shadow-[0_1px_2px_rgba(0,0,0,0.025)] transition-colors duration-200 hover:border-primary/20"
             )}
           >
             {/* Colored top accent bar */}
-            <div className={cn("absolute inset-y-5 left-0 w-0.5 rounded-r-full", c.accent)} />
+            <div className={cn("absolute inset-y-4 left-0 w-0.5 rounded-r-full", c.accent)} />
 
             {/* Header row */}
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-xs font-medium text-muted-foreground">
                 {stat.label}
               </p>
-              <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", c.icon)}>
-                <Icon size={17} strokeWidth={1.8} />
+              <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", c.icon)}>
+                <Icon size={14} strokeWidth={1.8} />
               </div>
             </div>
 
             {/* Value */}
             <div className="flex items-baseline gap-1">
-              <span className="text-[1.75rem] font-semibold leading-none tracking-[-0.03em] text-foreground tabular-nums">
+              <span className="text-xl font-semibold leading-none tracking-[-0.03em] text-foreground tabular-nums">
                 <Counter
                   value={stat.value}
                   suffix={stat.display.includes("%") ? "%" : ""}
@@ -245,13 +245,13 @@ export function DashboardStats({ loading = false }: DashboardStatsProps) {
             <Sparkline data={stat.sparkline} color={stat.color as keyof typeof colorMap} />
 
             {/* Footer */}
-            <div className="flex min-w-0 items-center justify-between gap-2 border-t border-border/50 pt-3">
-              <p className="truncate text-xs text-muted-foreground">{stat.sub}</p>
+            <div className="flex min-w-0 items-center justify-between gap-2 border-t border-border/50 pt-2">
+              <p className="truncate text-[0.6875rem] text-muted-foreground">{stat.sub}</p>
               <span className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[0.6875rem] font-medium",
+                "inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.625rem] font-medium",
                 trendClass
               )}>
-                <TrendIcon size={11} strokeWidth={2.5} />
+                <TrendIcon size={10} strokeWidth={2.5} />
                 {stat.trendLabel}
               </span>
             </div>

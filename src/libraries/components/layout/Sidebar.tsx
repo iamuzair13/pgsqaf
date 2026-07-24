@@ -18,7 +18,6 @@ import {
   Moon,
   Sun,
   LogOut,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +42,14 @@ const navGroups = [
   {
     label: "System",
     items: [{ label: "Setup", href: "/setup", icon: Settings }],
+  },
+];
+
+// Student-only nav: just Profile
+const studentNavGroups = [
+  {
+    label: "Account",
+    items: [{ label: "My Profile", href: "/profile", icon: UserCircle }],
   },
 ];
 
@@ -136,10 +143,15 @@ function SidebarBrand({ open, onToggle }: { open: boolean; onToggle: () => void 
 
 function NavItems({ open, onItemClick }: { open: boolean; onItemClick?: () => void }) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const isStudent = (session?.user as { role?: string } | undefined)?.role === "STUDENT";
+
+  // While session is loading, render minimal nav to avoid flashing admin items
+  const groups = status === "loading" ? [] : isStudent ? studentNavGroups : navGroups;
 
   return (
     <nav aria-label="Main navigation" className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
-      {navGroups.map((group, i) => (
+      {groups.map((group, i) => (
         <div key={group.label}>
           {/* Divider between groups when collapsed, since labels disappear */}
           {!open && i > 0 && <div className="mx-2 my-2 border-t border-sidebar-border/60" />}
@@ -217,14 +229,6 @@ function NavItems({ open, onItemClick }: { open: boolean; onItemClick?: () => vo
                     )}
                   </AnimatePresence>
 
-                  {open && active && (
-                    <ChevronRight
-                      size={13}
-                      className="relative z-10 ml-auto shrink-0 text-primary/70"
-                      aria-hidden="true"
-                    />
-                  )}
-
                   {/* Tooltip only makes sense when the rail is collapsed */}
                   {!open && <RailTooltip label={label} />}
                 </Link>
@@ -263,10 +267,10 @@ function SidebarFooter({ compact }: { compact: boolean }) {
     <div
       className={cn(
         "shrink-0 border-t border-sidebar-border py-3",
-        compact ? "flex flex-col items-center gap-1.5 px-2" : "space-y-1 px-2"
+        compact ? "flex flex-col items-center gap-1.5 px-2" : "space-y-2 px-2"
       )}
     >
-      {/* Theme toggle */}
+      {/* ── System toggle ── */}
       <button
         onClick={() => setTheme(isDark ? "light" : "dark")}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -284,11 +288,11 @@ function SidebarFooter({ compact }: { compact: boolean }) {
         {compact && <RailTooltip label={isDark ? "Light mode" : "Dark mode"} />}
       </button>
 
-      {/* User card */}
+      {/* ── User area — grouped card with identity + sign-out ── */}
       <div
         className={cn(
-          "flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30",
-          compact ? "h-10 w-10 justify-center" : "mt-2 px-3 py-2"
+          "flex items-center gap-3 rounded-lg border border-sidebar-border/60 bg-sidebar-accent/30",
+          compact ? "h-10 w-10 justify-center" : "px-3 py-2"
         )}
       >
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground ring-2 ring-primary/20">
@@ -306,7 +310,7 @@ function SidebarFooter({ compact }: { compact: boolean }) {
               <>
                 <p className="truncate text-xs font-semibold leading-none text-white">{userName}</p>
                 <p className="mt-0.5 truncate text-[0.6875rem] leading-none text-white/60">
-                  {userRole === "SUPER_ADMIN" ? "Super Admin" : "Admin"}
+                  {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "STUDENT" ? "Student" : "Admin"}
                   {userEmail ? ` · ${userEmail}` : ""}
                 </p>
               </>
@@ -320,7 +324,7 @@ function SidebarFooter({ compact }: { compact: boolean }) {
             size="icon-sm"
             onClick={() => signOutAction()}
             aria-label="Sign out"
-            className="shrink-0 text-white hover:bg-destructive/10 hover:text-destructive"
+            className="shrink-0 text-white/70 hover:bg-destructive/10 hover:text-destructive"
           >
             <LogOut size={14} aria-hidden="true" />
           </Button>

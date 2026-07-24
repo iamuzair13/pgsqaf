@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 import type { Faculty } from "@/types"
 
 // GET /api/faculties — list all faculties with counts
 export async function GET() {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const rows = await query<Faculty>(
       `SELECT f.id, f.name, f.code, f.dean, f.description, f.status,
@@ -24,6 +28,9 @@ export async function GET() {
 
 // POST /api/faculties — create a new faculty
 export async function POST(req: NextRequest) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const body = await req.json()
     const { name, code, dean, description } = body as {

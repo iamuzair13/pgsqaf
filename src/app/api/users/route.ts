@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-guard"
 import bcrypt from "bcryptjs"
 import type { User } from "@/types"
 
 // GET /api/users — list all admin users
 export async function GET() {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const rows = await query<Omit<User, "password">>(
       `SELECT id, name, email, role, status, created_at, updated_at
@@ -20,6 +24,9 @@ export async function GET() {
 
 // POST /api/users — create a new admin user
 export async function POST(req: NextRequest) {
+  const { response } = await requireAdmin()
+  if (response) return response
+
   try {
     const body = await req.json()
     const { name, email, password, role } = body as {
