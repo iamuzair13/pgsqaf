@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
+import { MotionConfig } from "framer-motion";
 import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -24,9 +25,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <TooltipProvider delay={300}>
-            {children}
-          </TooltipProvider>
+          <MotionConfig reducedMotion="user">
+            <TooltipProvider delay={300}>
+              {children}
+            </TooltipProvider>
+          </MotionConfig>
         </ThemeProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>

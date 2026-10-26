@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const adminMobileNav = [
-  { label: "Dashboard",  href: "/",           icon: LayoutDashboard },
-  { label: "Frameworks", href: "/frameworks",  icon: BookOpen },
-  { label: "Profile",    href: "/profile",     icon: UserCircle },
-  { label: "Settings",   href: "/settings",    icon: Settings },
+  { label: "Dashboard",    href: "/",           icon: LayoutDashboard },
+  { label: "Frameworks",   href: "/frameworks",  icon: BookOpen },
+  { label: "Applications", href: "/profile",     icon: UserCircle },
+  { label: "Settings",     href: "/settings",    icon: Settings },
 ];
 
-const studentMobileNav = [
-  { label: "Profile", href: "/profile", icon: UserCircle },
+const facultyMobileNav = [
+  { label: "Applications", href: "/profile", icon: UserCircle },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -25,8 +25,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const isStudent = (session?.user as { role?: string } | undefined)?.role === "STUDENT";
-  const mobileNav = status === "loading" ? [] : isStudent ? studentMobileNav : adminMobileNav;
+  const isFaculty = (session?.user as { role?: string } | undefined)?.role === "FACULTY";
+  const mobileNav = status === "loading" ? [] : isFaculty ? facultyMobileNav : adminMobileNav;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">

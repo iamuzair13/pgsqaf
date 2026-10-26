@@ -1,10 +1,10 @@
 import { MainLayout } from "@/libraries/components/layout/MainLayout";
-import { UserProfile } from "@/libraries/components/profile/UserProfile";
+import { FacultyDashboard } from "@/libraries/components/faculty/FacultyDashboard";
 
 export default function ProfilePage() {
   return (
     <MainLayout>
-      <UserProfile />
+      <FacultyDashboard />
     </MainLayout>
   );
 }

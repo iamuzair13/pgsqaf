@@ -21,6 +21,7 @@ import {
   Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { errorMessage } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -55,7 +56,7 @@ interface Quantification {
   weightFactor: string
 }
 
-interface Criteria {
+export interface Criteria {
   id: string
   title: string
   domain: string
@@ -88,9 +89,11 @@ interface FrameworkHeader {
 /*  Constants                                                         */
 /* ------------------------------------------------------------------ */
 
-const DESCRIPTORS = ["Outstanding", "Excellent", "Very Good", "Good", "Satisfactory"]
+// Must match rubric_descriptors seed names — unknown names silently
+// fall back to "Good" in insertRubric.
+export const DESCRIPTORS = ["Outstanding", "Excellent", "Good", "Average", "Poor", "Unsatisfactory"]
 
-const uid = () => Math.random().toString(36).slice(2, 9)
+export const uid = () => Math.random().toString(36).slice(2, 9)
 
 const newIndicator = (): Indicator => ({ id: uid(), question: "", weight: "", requireAttachment: false })
 
@@ -98,7 +101,7 @@ const newRubricRow = (): RubricRow => ({ id: uid(), score: "", descriptor: "", p
 
 const newEvidence = (): EvidenceItem => ({ id: uid(), title: "", description: "", requireAttachment: false })
 
-const newCriteria = (): Criteria => ({
+export const newCriteria = (): Criteria => ({
   id: uid(),
   title: "",
   domain: "",
@@ -115,10 +118,12 @@ const newCriteria = (): Criteria => ({
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
+// Each indicator stores its share of the criterion's weight —
+// schema: SUM(indicators.weight) per criteria_id = criteria.total_weight.
 function redistributeWeights(indicators: Indicator[], criteriaWeight: string): Indicator[] {
   const w = parseFloat(criteriaWeight)
   if (isNaN(w) || w <= 0 || indicators.length === 0) return indicators
-  const each = 100 / indicators.length
+  const each = w / indicators.length
   return indicators.map(i => ({ ...i, weight: each.toFixed(2) }))
 }
 
@@ -223,7 +228,7 @@ function StepDetails({ header, setH, errors }: {
 /*  Step 2 — Criteria & Indicators                                    */
 /* ------------------------------------------------------------------ */
 
-function CriteriaIndicatorCard({ criteria, index, onUpdate, onRemove, canRemove }: {
+export function CriteriaIndicatorCard({ criteria, index, onUpdate, onRemove, canRemove }: {
   criteria: Criteria; index: number
   onUpdate: (c: Criteria) => void; onRemove: () => void; canRemove: boolean
 }) {
@@ -338,8 +343,8 @@ function CriteriaIndicatorCard({ criteria, index, onUpdate, onRemove, canRemove 
 
                 {criteria.weight && criteria.indicators.length > 0 && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Each indicator: <span className="font-semibold tabular-nums text-foreground">{(100 / criteria.indicators.length).toFixed(2)}%</span>
-                    <span className="ml-1">of criteria weight ({criteria.weight}%)</span>
+                    Each indicator: <span className="font-semibold tabular-nums text-foreground">{(parseFloat(criteria.weight) / criteria.indicators.length).toFixed(2)}</span>
+                    <span className="ml-1">of framework weight (criteria {criteria.weight}%)</span>
                   </p>
                 )}
 
@@ -928,7 +933,7 @@ export function FrameworkCreator() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        toast.error(data?.error ?? "Failed to create framework. Please try again.")
+        toast.error(errorMessage(data, "Failed to create framework. Please try again."))
         return
       }
       toast.success(`Framework "${header.title}" created successfully`)

@@ -1,76 +1,47 @@
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
-import { fetchSapStudent } from "@/lib/sap"
-import type { ErpProfile } from "@/types"
+import { fetchSapEmployee } from "@/lib/sap"
+import { withMember } from "@/server/http/handler"
+import { ok } from "@/server/http/response"
+import type { EmpProfile } from "@/types"
 
-export async function GET() {
-  try {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+const TAG = "api/profile"
 
-    const sapId = (session.user as { sapId?: string }).sapId
-    if (!sapId) {
-      return NextResponse.json({ error: "Student identity not found" }, { status: 403 })
-    }
+export const GET = withMember(TAG, async ({ session, email }) => {
+  // Admins may not have an SAP employee record — the page still works,
+  // it just renders a session-only identity block.
+  const employee = await fetchSapEmployee(email)
 
-    // Fetch fresh student data from SAP
-    const student = await fetchSapStudent(sapId)
-    if (!student) {
-      return NextResponse.json({ error: "Student record not found" }, { status: 404 })
-    }
+  const erpId = email.toLowerCase()
 
-    const profile: ErpProfile = {
-      erp_id: student.sapId,
-      name: student.name,
-      email: student.email ?? session.user.email,
-      program: student.program ?? "",
-      department: student.department ?? "",
-      campus: student.campus ?? "",
-      admission_year: student.admissionYear ?? "",
-      academic_year: student.academicYear ?? "",
-      gender: student.gender ?? "",
-      father_name: student.fatherName ?? "",
-      mobile: student.mobile ?? "",
-      address: student.address ?? "",
-      nationality: student.nationality ?? "",
-    }
+  const profile: EmpProfile | null = employee ? {
+    erp_id: erpId,
+    name: employee.name,
+    email: employee.email ?? session.user.email,
+    emp_no: employee.empId ?? "",
+    designation: employee.designation ?? "",
+    department: employee.department ?? "",
+    faculty: employee.faculty ?? "",
+    campus: employee.campus ?? "",
+    mobile: employee.mobile ?? "",
+  } : null
 
-    const frameworks = await query(
-      `SELECT f.id, f.title, f.description, f.version, f.updated_at,
-              COUNT(DISTINCT c.id)::int AS criteria_count,
-              COUNT(DISTINCT i.id)::int AS indicator_count
-       FROM frameworks f
-       LEFT JOIN criteria c ON c.framework_id = f.id
-       LEFT JOIN indicators i ON i.criteria_id = c.id
-       WHERE f.status = 'PUBLISHED'
-       GROUP BY f.id
-       ORDER BY f.updated_at DESC`
-    )
+  const submissions = await query(
+    `SELECT s.id, s.framework_id, f.title AS framework_title,
+            f.version AS framework_version, s.status, s.progress,
+            s.total_score, s.submitted_at, s.created_at, s.updated_at,
+            COUNT(DISTINCT sa.indicator_id)::int AS answered_count,
+            COUNT(DISTINCT i.id)::int AS indicator_count
+     FROM submissions s
+     JOIN frameworks f ON f.id = s.framework_id
+     LEFT JOIN criteria c ON c.framework_id = f.id
+     LEFT JOIN indicators i ON i.criteria_id = c.id
+     LEFT JOIN submission_answers sa
+       ON sa.submission_id = s.id AND sa.indicator_id = i.id AND sa.score IS NOT NULL
+     WHERE s.erp_id = $1
+     GROUP BY s.id, f.id
+     ORDER BY s.updated_at DESC`,
+    [erpId]
+  )
 
-    const submissions = await query(
-      `SELECT s.id, s.framework_id, f.title AS framework_title,
-              f.version AS framework_version, s.status, s.progress,
-              s.total_score, s.submitted_at, s.created_at, s.updated_at,
-              COUNT(DISTINCT sa.indicator_id)::int AS answered_count,
-              COUNT(DISTINCT i.id)::int AS indicator_count
-       FROM submissions s
-       JOIN frameworks f ON f.id = s.framework_id
-       LEFT JOIN criteria c ON c.framework_id = f.id
-       LEFT JOIN indicators i ON i.criteria_id = c.id
-       LEFT JOIN submission_answers sa
-         ON sa.submission_id = s.id AND sa.indicator_id = i.id AND sa.score IS NOT NULL
-       WHERE s.erp_id = $1
-       GROUP BY s.id, f.id
-       ORDER BY s.updated_at DESC`,
-      [student.sapId]
-    )
-
-    return NextResponse.json({ profile, frameworks, submissions })
-  } catch (error) {
-    console.error("[GET /api/profile]", error)
-    return NextResponse.json({ error: "Failed to load profile" }, { status: 500 })
-  }
-}
+  return ok({ profile, submissions })
+})

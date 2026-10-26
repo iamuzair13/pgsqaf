@@ -1,42 +1,14 @@
 import { getToken } from "next-auth/jwt"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-
-const PUBLIC_PATHS = ["/sign-in"]
-
-// Routes that students are allowed to access
-const STUDENT_ALLOWED = [
-  "/profile",
-  "/api/profile",
-  "/api/submissions",
-  "/api/verify-student",
-  "/api/sap-debug",
-  "/api/auth",
-]
-
-// Routes that only students can access (admins get redirected)
-const STUDENT_ONLY = [
-  "/profile",
-  "/api/profile",
-  "/api/submissions",
-  "/api/verify-student",
-]
-
-function isStudentAllowed(pathname: string): boolean {
-  return STUDENT_ALLOWED.some((p) => pathname === p || pathname.startsWith(p + "/"))
-}
-
-function isStudentOnly(pathname: string): boolean {
-  return STUDENT_ONLY.some((p) => pathname === p || pathname.startsWith(p + "/"))
-}
+import { allowedRolesFor, PUBLIC_PATHS } from "@/lib/permissions"
+import type { UserRole } from "@/types"
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
-  const isApiAuth = pathname.startsWith("/api/auth")
-
-  if (isPublic || isApiAuth) return NextResponse.next()
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
+  if (isPublic) return NextResponse.next()
 
   const token = await getToken({
     req,
@@ -49,21 +21,34 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(signInUrl)
   }
 
-  const role = token.role as string | undefined
+  const role = token.role as UserRole | undefined
 
-  // RBAC: students can only access student routes
-  if (role === "STUDENT" && !isStudentAllowed(pathname)) {
-    const profileUrl = new URL("/profile", req.url)
-    return NextResponse.redirect(profileUrl)
+  // Fail closed: a valid token must carry a known role.
+  // (An older token signed before roles existed, or a malformed one, gets no access.)
+  if (role !== "FACULTY" && role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    const signInUrl = new URL("/sign-in", req.url)
+    return NextResponse.redirect(signInUrl)
   }
 
-  // RBAC: admins cannot access student-only routes
-  if (role !== "STUDENT" && isStudentOnly(pathname)) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Student access only" }, { status: 403 })
+  const allowed = allowedRolesFor(pathname)
+
+  // Unmatched routes: faculty stay confined to their allowlist; admins pass.
+  if (allowed === null) {
+    if (role === "FACULTY") {
+      return NextResponse.redirect(new URL("/profile", req.url))
     }
-    const dashboardUrl = new URL("/", req.url)
-    return NextResponse.redirect(dashboardUrl)
+    return NextResponse.next()
+  }
+
+  if (!allowed.includes(role)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "Insufficient permissions" } },
+        { status: 403 }
+      )
+    }
+    const target = role === "FACULTY" ? "/profile" : "/"
+    return NextResponse.redirect(new URL(target, req.url))
   }
 
   return NextResponse.next()

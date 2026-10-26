@@ -1,37 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
-import { query } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-guard"
+import { withAdmin } from "@/server/http/handler"
+import { paramId } from "@/server/http/params"
+import { created, ok } from "@/server/http/response"
+import { criteriaInputSchema } from "@/schemas/framework"
+import { listCriteria } from "@/server/repos/frameworks.repo"
+import { addCriteria } from "@/server/services/frameworks.service"
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { response } = await requireAdmin()
-  if (response) return response
+const TAG = "api/frameworks/:id/criteria"
 
-  const { id } = await params
-  const frameworkId = parseInt(id)
+export const GET = withAdmin(TAG, async ({ params }) =>
+  ok(await listCriteria(paramId(params.id, "framework ID")))
+)
 
-  if (isNaN(frameworkId)) {
-    return NextResponse.json({ error: "Invalid framework ID" }, { status: 400 })
-  }
-
-  try {
-    const rows = await query(
-      `SELECT c.id, c.framework_id, c.title, c.domain, c.measure,
-              c.total_weight, c.display_order,
-              COUNT(i.id)::int AS indicators_count
-       FROM criteria c
-       LEFT JOIN indicators i ON i.criteria_id = c.id
-       WHERE c.framework_id = $1
-       GROUP BY c.id
-       ORDER BY c.display_order ASC`,
-      [frameworkId]
-    )
-
-    return NextResponse.json(rows)
-  } catch (err) {
-    console.error("[GET /api/frameworks/:id/criteria]", err)
-    return NextResponse.json({ error: "Failed to fetch criteria" }, { status: 500 })
-  }
-}
+export const POST = withAdmin(TAG, async ({ req, params }) => {
+  const body = criteriaInputSchema.parse(await req.json())
+  const result = await addCriteria(paramId(params.id, "framework ID"), body)
+  return created(result)
+})

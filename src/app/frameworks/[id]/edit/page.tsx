@@ -46,7 +46,7 @@ export default async function EditFrameworkPage({ params }: Props) {
                   <p className="text-sm text-muted-foreground mt-0.5">Manage evaluation criteria and their indicators for this framework.</p>
                 </div>
               </div>
-              <CriteriaList frameworkId={numId} />
+              <CriteriaList frameworkId={numId} linkTo="edit" />
             </div>
           </>
         ) : (

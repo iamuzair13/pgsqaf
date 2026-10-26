@@ -1,65 +1,27 @@
-import { NextRequest, NextResponse } from "next/server"
-import { query } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-guard"
-import type { Faculty } from "@/types"
+import { createFacultySchema } from "@/schemas/org"
+import { withAdmin } from "@/server/http/handler"
+import { created, ok } from "@/server/http/response"
+import { createFaculty, listFaculties } from "@/server/repos/org.repo"
+import { ConflictError } from "@/server/http/errors"
 
-// GET /api/faculties — list all faculties with counts
-export async function GET() {
-  const { response } = await requireAdmin()
-  if (response) return response
+const TAG = "api/faculties"
 
+export const GET = withAdmin(TAG, async () => ok(await listFaculties()))
+
+export const POST = withAdmin(TAG, async ({ req }) => {
+  const input = createFacultySchema.parse(await req.json())
   try {
-    const rows = await query<Faculty>(
-      `SELECT f.id, f.name, f.code, f.dean, f.description, f.status,
-              f.created_at, f.updated_at,
-              (SELECT COUNT(*) FROM departments d WHERE d.faculty_id = f.id)::int AS department_count,
-              (SELECT COUNT(*) FROM programs p
-               JOIN departments d ON d.id = p.department_id
-               WHERE d.faculty_id = f.id)::int AS program_count
-       FROM faculties f
-       ORDER BY f.name ASC`
-    )
-    return NextResponse.json(rows)
+    const rows = await createFaculty({
+      name: input.name.trim(),
+      code: input.code.trim().toUpperCase(),
+      dean: input.dean?.trim(),
+      description: input.description?.trim(),
+    })
+    return created(rows[0])
   } catch (err) {
-    console.error("[GET /api/faculties]", err)
-    return NextResponse.json({ error: "Failed to fetch faculties" }, { status: 500 })
-  }
-}
-
-// POST /api/faculties — create a new faculty
-export async function POST(req: NextRequest) {
-  const { response } = await requireAdmin()
-  if (response) return response
-
-  try {
-    const body = await req.json()
-    const { name, code, dean, description } = body as {
-      name?: string
-      code?: string
-      dean?: string
-      description?: string
+    if (err instanceof Error && err.message.includes("unique")) {
+      throw new ConflictError("A faculty with this code already exists")
     }
-
-    if (!name?.trim() || !code?.trim()) {
-      return NextResponse.json(
-        { error: "Name and code are required" },
-        { status: 400 }
-      )
-    }
-
-    const rows = await query<Faculty>(
-      `INSERT INTO faculties (name, code, dean, description)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, code, dean, description, status, created_at, updated_at`,
-      [name.trim(), code.trim().toUpperCase(), dean?.trim() || null, description?.trim() || null]
-    )
-
-    return NextResponse.json(rows[0], { status: 201 })
-  } catch (err) {
-    console.error("[POST /api/faculties]", err)
-    const message = err instanceof Error && err.message.includes("unique")
-      ? "A faculty with this code already exists"
-      : "Failed to create faculty"
-    return NextResponse.json({ error: message }, { status: 500 })
+    throw err
   }
-}
+})
