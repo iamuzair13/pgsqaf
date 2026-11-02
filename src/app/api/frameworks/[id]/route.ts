@@ -1,71 +1,19 @@
-import { NextRequest, NextResponse } from "next/server"
-import { query } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-guard"
+import { withAdmin } from "@/server/http/handler"
+import { paramId } from "@/server/http/params"
+import { ok } from "@/server/http/response"
+import { NotFoundError } from "@/server/http/errors"
+import { deleteFrameworkById, getFrameworkById } from "@/server/repos/frameworks.repo"
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { response } = await requireAdmin()
-  if (response) return response
+const TAG = "api/frameworks/:id"
 
-  const { id } = await params
-  const numId = parseInt(id)
+export const GET = withAdmin(TAG, async ({ params }) => {
+  const framework = await getFrameworkById(paramId(params.id, "framework ID"))
+  if (!framework) throw new NotFoundError("Framework not found")
+  return ok(framework)
+})
 
-  if (isNaN(numId)) {
-    return NextResponse.json({ error: "Invalid framework ID" }, { status: 400 })
-  }
-
-  try {
-    const rows = await query(
-      `SELECT f.id, f.title, f.description, f.status, f.version,
-              f.created_by, u.name AS created_by_name,
-              f.created_at, f.updated_at,
-              COUNT(c.id)::int AS criteria_count
-       FROM frameworks f
-       LEFT JOIN users    u ON u.id = f.created_by
-       LEFT JOIN criteria c ON c.framework_id = f.id
-       WHERE f.id = $1
-       GROUP BY f.id, u.name`,
-      [numId]
-    )
-
-    if (!rows.length) {
-      return NextResponse.json({ error: "Framework not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(rows[0])
-  } catch (err) {
-    console.error("[GET /api/frameworks/:id]", err)
-    return NextResponse.json({ error: "Failed to fetch framework" }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { response } = await requireAdmin()
-  if (response) return response
-
-  const { id } = await params
-  const numId = parseInt(id)
-
-  if (isNaN(numId)) {
-    return NextResponse.json({ error: "Invalid framework ID" }, { status: 400 })
-  }
-
-  try {
-    const rows = await query(
-      "DELETE FROM frameworks WHERE id = $1 RETURNING id",
-      [numId]
-    )
-    if (!rows.length) {
-      return NextResponse.json({ error: "Framework not found" }, { status: 404 })
-    }
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    console.error("[DELETE /api/frameworks/:id]", err)
-    return NextResponse.json({ error: "Failed to delete framework" }, { status: 500 })
-  }
-}
+export const DELETE = withAdmin(TAG, async ({ params }) => {
+  const deleted = await deleteFrameworkById(paramId(params.id, "framework ID"))
+  if (!deleted) throw new NotFoundError("Framework not found")
+  return ok({ success: true })
+})

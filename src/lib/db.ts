@@ -1,7 +1,6 @@
-import { Pool } from "pg"
+import { Pool, PoolClient } from "pg"
 
 declare global {
-  // eslint-disable-next-line no-var
   var _pgPool: Pool | undefined
 }
 
@@ -28,6 +27,9 @@ const pool = globalThis._pgPool ?? createPool()
 if (process.env.NODE_ENV !== "production") globalThis._pgPool = pool
 
 export default pool
+
+/** Anything that can run a SQL query — the pool or a transaction client. */
+export type DbHandle = Pool | PoolClient
 
 export async function query<T = Record<string, unknown>>(
   text: string,

@@ -1,94 +1,31 @@
-import { NextRequest, NextResponse } from "next/server"
-import { query } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-guard"
-import type { Department } from "@/types"
+import { updateDepartmentSchema } from "@/schemas/org"
+import { withAdmin } from "@/server/http/handler"
+import { paramId } from "@/server/http/params"
+import { ok } from "@/server/http/response"
+import { BadRequestError, NotFoundError } from "@/server/http/errors"
+import { deleteDepartment, updateDepartment } from "@/server/repos/org.repo"
 
-// PATCH /api/departments/[id]
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { response } = await requireAdmin()
-  if (response) return response
+const TAG = "api/departments/:id"
 
-  try {
-    const { id } = await params
-    const deptId = parseInt(id, 10)
-    if (isNaN(deptId)) {
-      return NextResponse.json({ error: "Invalid department ID" }, { status: 400 })
-    }
+export const PATCH = withAdmin(TAG, async ({ req, params }) => {
+  const id = paramId(params.id, "department ID")
+  const input = updateDepartmentSchema.parse(await req.json())
+  if (Object.keys(input).length === 0) throw new BadRequestError("No fields to update")
 
-    const body = await req.json()
-    const { faculty_id, name, code, head, description, status } = body as {
-      faculty_id?: number
-      name?: string
-      code?: string
-      head?: string
-      description?: string
-      status?: boolean
-    }
+  const updated = await updateDepartment(id, {
+    ...(input.faculty_id !== undefined && { faculty_id: input.faculty_id }),
+    ...(input.name !== undefined && { name: input.name.trim() }),
+    ...(input.code !== undefined && { code: input.code.trim().toUpperCase() }),
+    ...(input.head !== undefined && { head: input.head?.trim() || null }),
+    ...(input.description !== undefined && { description: input.description?.trim() || null }),
+    ...(input.status !== undefined && { status: input.status }),
+  })
+  if (!updated) throw new NotFoundError("Department not found")
+  return ok(updated)
+})
 
-    const fields: string[] = []
-    const values: unknown[] = []
-    let idx = 1
-
-    if (faculty_id !== undefined) { fields.push(`faculty_id = $${idx++}`); values.push(faculty_id) }
-    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name.trim()) }
-    if (code !== undefined) { fields.push(`code = $${idx++}`); values.push(code.trim().toUpperCase()) }
-    if (head !== undefined) { fields.push(`head = $${idx++}`); values.push(head?.trim() || null) }
-    if (description !== undefined) { fields.push(`description = $${idx++}`); values.push(description?.trim() || null) }
-    if (status !== undefined) { fields.push(`status = $${idx++}`); values.push(status) }
-
-    if (fields.length === 0) {
-      return NextResponse.json({ error: "No fields to update" }, { status: 400 })
-    }
-
-    values.push(deptId)
-
-    const rows = await query<Department>(
-      `UPDATE departments SET ${fields.join(", ")} WHERE id = $${idx}
-       RETURNING id, faculty_id, name, code, head, description, status, created_at, updated_at`,
-      values
-    )
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Department not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(rows[0])
-  } catch (err) {
-    console.error("[PATCH /api/departments/[id]]", err)
-    return NextResponse.json({ error: "Failed to update department" }, { status: 500 })
-  }
-}
-
-// DELETE /api/departments/[id]
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { response } = await requireAdmin()
-  if (response) return response
-
-  try {
-    const { id } = await params
-    const deptId = parseInt(id, 10)
-    if (isNaN(deptId)) {
-      return NextResponse.json({ error: "Invalid department ID" }, { status: 400 })
-    }
-
-    const rows = await query<{ id: number }>(
-      "DELETE FROM departments WHERE id = $1 RETURNING id",
-      [deptId]
-    )
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Department not found" }, { status: 404 })
-    }
-
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    console.error("[DELETE /api/departments/[id]]", err)
-    return NextResponse.json({ error: "Failed to delete department" }, { status: 500 })
-  }
-}
+export const DELETE = withAdmin(TAG, async ({ params }) => {
+  const deleted = await deleteDepartment(paramId(params.id, "department ID"))
+  if (!deleted) throw new NotFoundError("Department not found")
+  return ok({ success: true })
+})

@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { errorMessage } from "@/lib/api";
 
 interface CriteriaDetailData {
   id: number;
@@ -88,7 +89,7 @@ export function CriteriaDetailView({ frameworkId, criteriaId }: CriteriaDetailVi
         const res = await fetch(`/api/frameworks/${frameworkId}/criteria/${criteriaId}`);
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
-          throw new Error(d?.error ?? "Failed to load criteria");
+          throw new Error(errorMessage(d, "Failed to load criteria"));
         }
         const d = await res.json();
         if (!cancelled) setData(parseCriteria(d));
@@ -148,6 +149,12 @@ export function CriteriaDetailView({ frameworkId, criteriaId }: CriteriaDetailVi
         </div>
         <h1 className="text-xl font-semibold text-foreground mb-1">{criteria.title}</h1>
         <p className="text-sm text-muted-foreground max-w-2xl">{criteria.measure}</p>
+        <Button
+          variant="outline" size="sm" className="mt-3"
+          render={<Link href={`/frameworks/${frameworkId}/criteria/${criteriaId}/edit`} />}
+        >
+          Edit criteria
+        </Button>
       </div>
 
       {/* Weight info */}

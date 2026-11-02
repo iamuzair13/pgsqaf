@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { signInAction, studentTestSignInAction, googleSignInAction } from "@/app/actions/auth"
+import { signInAction, facultyTestSignInAction, googleSignInAction } from "@/app/actions/auth"
 
 /* ------------------------------------------------------------------ */
 /*  Left panel feature list                                           */
@@ -86,9 +86,9 @@ export default function SignInPage() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  // Student authentication state
+  // Faculty authentication state
   const [googleLoading, setGoogleLoading] = React.useState(false)
-  const [testSapId, setTestSapId] = React.useState("")
+  const [testEmail, settestEmail] = React.useState("")
   const [testLoading, setTestLoading] = React.useState(false)
   const [testError, setTestError] = React.useState<string | null>(null)
 
@@ -120,7 +120,7 @@ export default function SignInPage() {
     setTestError(null)
     setTestLoading(true)
     try {
-      const result = await studentTestSignInAction(testSapId)
+      const result = await facultyTestSignInAction(testEmail)
       if (result?.error) setTestError(result.error)
     } finally {
       setTestLoading(false)
@@ -382,7 +382,7 @@ export default function SignInPage() {
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-border/60" />
             <span className="text-[0.6875rem] font-medium uppercase tracking-widest text-muted-foreground/50">
-              Student Access
+              Faculty Access
             </span>
             <div className="h-px flex-1 bg-border/60" />
           </div>
@@ -422,10 +422,10 @@ export default function SignInPage() {
               </div>
               <form onSubmit={handleTestSignIn} className="space-y-2.5">
                 <input
-                  type="text"
-                  placeholder="Student ID (e.g. 746539)"
-                  value={testSapId}
-                  onChange={(e) => setTestSapId(e.target.value)}
+                  type="email"
+                  placeholder="University email (e.g. name@spmo.uol.edu.pk)"
+                  value={testEmail}
+                  onChange={(e) => settestEmail(e.target.value)}
                   required
                   className={cn(
                     "w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-foreground",

@@ -8,6 +8,7 @@ import { CriteriaList } from "@/libraries/components/criteria/CriteriaList";
 import type { Framework } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { errorMessage } from "@/lib/api";
 
 interface FrameworkDetailViewProps { id: number; }
 
@@ -23,7 +24,7 @@ export function FrameworkDetailView({ id }: FrameworkDetailViewProps) {
         const res = await fetch(`/api/frameworks/${id}`)
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
-          throw new Error(data?.error ?? "Failed to load framework")
+          throw new Error(errorMessage(data, "Failed to load framework"))
         }
         const data = await res.json()
         if (!cancelled) setFw(data)

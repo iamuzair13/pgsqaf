@@ -23,17 +23,17 @@ export async function signInAction(email: string, password: string) {
   }
 }
 
-export async function studentTestSignInAction(sapId: string) {
+export async function facultyTestSignInAction(email: string) {
   try {
-    await nextAuthSignIn("student-test", {
-      sapId,
+    await nextAuthSignIn("faculty-test", {
+      email,
       redirectTo: "/profile",
     })
   } catch (err) {
     if (err instanceof AuthError) {
       switch (err.type) {
         case "CredentialsSignin":
-          return { error: "Student record not found. Please use your official University account." }
+          return { error: "Employee record not found. Please use your official University email." }
         default:
           return { error: "Something went wrong. Please try again." }
       }

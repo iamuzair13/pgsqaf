@@ -1,5 +1,5 @@
 export type FrameworkStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
-export type UserRole = "SUPER_ADMIN" | "ADMIN" | "STUDENT";
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "FACULTY";
 
 export interface User {
   id: number;
@@ -149,20 +149,16 @@ export interface FrameworkAssignment {
 
 export type SubmissionStatus = "DRAFT" | "SUBMITTED";
 
-export interface ErpProfile {
-  erp_id: string;
+export interface EmpProfile {
+  erp_id: string; // faculty member's university email (the SAP identifier)
   name: string;
   email: string;
-  program: string;
+  emp_no: string;
+  designation: string;
   department: string;
+  faculty: string;
   campus: string;
-  admission_year: string;
-  academic_year: string;
-  gender: string;
-  father_name: string;
   mobile: string;
-  address: string;
-  nationality: string;
 }
 
 export interface SubmissionSummary {
@@ -201,8 +197,8 @@ export interface SubmissionCriteria extends Criteria {
 
 export interface SubmissionDetail extends SubmissionSummary {
   erp_id: string;
-  student_name: string;
-  student_email: string;
+  applicant_name: string;
+  applicant_email: string;
   registration_no: string;
   faculty: string;
   department: string;
@@ -212,23 +208,22 @@ export interface SubmissionDetail extends SubmissionSummary {
 }
 
 /* ------------------------------------------------------------------ */
-/*  SAP Student (OData response)                                      */
+/*  SAP Employee (empinfoSet OData response)                          */
 /* ------------------------------------------------------------------ */
 
-export interface SapStudent {
-  sapId: string;
+export interface SapEmployee {
+  /** Canonical identifier: the university email used for the SAP lookup. */
+  email: string;
+  /** SAP personnel number (EmployeeId / Pernr), when the service returns one. */
+  empId: string | null;
   name: string;
-  email: string | null;
-  program: string | null;
+  designation: string | null;
   department: string | null;
+  faculty: string | null;
   campus: string | null;
-  admissionYear: string | null;
-  academicYear: string | null;
-  gender: string | null;
-  fatherName: string | null;
   mobile: string | null;
-  address: string | null;
-  nationality: string | null;
+  /** Raw SAP status code (e.g. "1" = active) — kept for future gating. */
+  employmentStatus: string | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -242,7 +237,6 @@ declare module "next-auth" {
       name: string;
       email: string;
       role: UserRole;
-      sapId?: string;
     }
   }
 }
@@ -251,6 +245,5 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
-    sapId?: string;
   }
 }

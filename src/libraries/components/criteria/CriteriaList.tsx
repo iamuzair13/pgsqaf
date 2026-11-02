@@ -12,9 +12,11 @@ import { cn } from "@/lib/utils";
 interface CriteriaListProps {
   frameworkId: number;
   loading?: boolean;
+  /** "view" links rows to the read-only detail page; "edit" links to the editor. */
+  linkTo?: "view" | "edit";
 }
 
-export function CriteriaList({ frameworkId, loading = false }: CriteriaListProps) {
+export function CriteriaList({ frameworkId, loading = false, linkTo = "view" }: CriteriaListProps) {
   const [criterias, setCriterias] = React.useState<Criteria[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
@@ -83,7 +85,7 @@ export function CriteriaList({ frameworkId, loading = false }: CriteriaListProps
           {criterias.map((criteria) => (
             <li key={criteria.id}>
               <Link
-                href={`/frameworks/${frameworkId}/criteria/${criteria.id}`}
+                href={`/frameworks/${frameworkId}/criteria/${criteria.id}${linkTo === "edit" ? "/edit" : ""}`}
                 className="group block p-4 rounded-lg border border-border bg-card transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-2 focus-visible:outline-offset-1"
               >
                 <div className="flex items-start justify-between gap-3">

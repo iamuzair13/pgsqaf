@@ -27,7 +27,7 @@ import { signOutAction } from "@/app/actions/auth";
 /*  Nav config                                                        */
 /* ------------------------------------------------------------------ */
 
-const navGroups = [
+const adminNavGroups = [
   {
     label: "Overview",
     items: [{ label: "Dashboard", href: "/", icon: LayoutDashboard }],
@@ -36,20 +36,24 @@ const navGroups = [
     label: "Management",
     items: [
       { label: "Frameworks", href: "/frameworks", icon: BookOpen },
-      { label: "User Profile", href: "/profile", icon: UserCircle },
+      { label: "My Applications", href: "/profile", icon: UserCircle },
     ],
   },
+];
+
+const superAdminNavGroups = [
+  ...adminNavGroups,
   {
     label: "System",
     items: [{ label: "Setup", href: "/setup", icon: Settings }],
   },
 ];
 
-// Student-only nav: just Profile
-const studentNavGroups = [
+// Faculty-only nav: just their applications
+const facultyNavGroups = [
   {
     label: "Account",
-    items: [{ label: "My Profile", href: "/profile", icon: UserCircle }],
+    items: [{ label: "My Applications", href: "/profile", icon: UserCircle }],
   },
 ];
 
@@ -144,10 +148,20 @@ function SidebarBrand({ open, onToggle }: { open: boolean; onToggle: () => void 
 function NavItems({ open, onItemClick }: { open: boolean; onItemClick?: () => void }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const isStudent = (session?.user as { role?: string } | undefined)?.role === "STUDENT";
+  const role = (session?.user as { role?: string } | undefined)?.role;
 
-  // While session is loading, render minimal nav to avoid flashing admin items
-  const groups = status === "loading" ? [] : isStudent ? studentNavGroups : navGroups;
+  // While session is loading — or the role is unknown — render no items.
+  // Never fall through to admin nav for an unrecognized role.
+  const groups =
+    status === "loading"
+      ? []
+      : role === "FACULTY"
+        ? facultyNavGroups
+        : role === "SUPER_ADMIN"
+          ? superAdminNavGroups
+          : role === "ADMIN"
+            ? adminNavGroups
+            : [];
 
   return (
     <nav aria-label="Main navigation" className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
@@ -255,7 +269,7 @@ function SidebarFooter({ compact }: { compact: boolean }) {
   const isLoading = status === "loading";
   const userName = session?.user?.name ?? "User";
   const userEmail = session?.user?.email ?? "";
-  const userRole = (session?.user as { role?: string } | undefined)?.role ?? "ADMIN";
+  const userRole = (session?.user as { role?: string } | undefined)?.role ?? "";
   const initials = userName
     .split(" ")
     .map((n) => n[0])
@@ -310,7 +324,7 @@ function SidebarFooter({ compact }: { compact: boolean }) {
               <>
                 <p className="truncate text-xs font-semibold leading-none text-white">{userName}</p>
                 <p className="mt-0.5 truncate text-[0.6875rem] leading-none text-white/60">
-                  {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "STUDENT" ? "Student" : "Admin"}
+                  {userRole === "SUPER_ADMIN" ? "Super Admin" : userRole === "ADMIN" ? "Admin" : userRole === "FACULTY" ? "Faculty" : "Signed in"}
                   {userEmail ? ` · ${userEmail}` : ""}
                 </p>
               </>
