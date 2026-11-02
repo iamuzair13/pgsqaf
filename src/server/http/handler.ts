@@ -102,10 +102,9 @@ export function withSuperAdmin<P = Record<string, string>>(
 }
 
 /**
- * Any authenticated member (faculty or admin) — the email is their
- * SAP identity. SAP membership is verified inside the service when a
- * submission is created, so pure sysadmins without an employee record
- * can browse but cannot start an appraisal.
+ * Any authenticated member (faculty or admin). The email is the
+ * submission identity; SAP enrichment happens in the service when
+ * a record exists for that email — it is not a membership gate.
  */
 export function withMember<P = Record<string, string>>(
   tag: string,

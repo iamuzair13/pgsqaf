@@ -43,21 +43,19 @@ export async function start(email: string, frameworkId: number, fallbackName: st
     return { id: existing[0].id, existing: true }
   }
 
+  // Any signed-in user can appraise — DB admins and SAP-verified employees
+  // alike. SAP enriches the snapshot when a record exists; it is not a gate.
   const employee = await fetchSapEmployee(email)
-  if (!employee) {
-    throw new NotFoundError("Employee record not found")
-  }
 
-  // The submissions row is the applicant's only DB identity — users stores
-  // admins only, so we snapshot the SAP record here at creation time.
   const created = await repo.createSubmission({
     erp_id: erpId,
-    applicant_name: employee.name !== "Unknown" ? employee.name : fallbackName,
-    applicant_email: employee.email,
-    registration_no: employee.empId ?? erpId,
-    faculty: employee.faculty ?? "",
-    department: employee.department ?? "",
-    program: employee.designation ?? "",
+    applicant_name:
+      employee && employee.name !== "Unknown" ? employee.name : fallbackName || erpId,
+    applicant_email: employee?.email ?? erpId,
+    registration_no: employee?.empId ?? erpId,
+    faculty: employee?.faculty ?? "",
+    department: employee?.department ?? "",
+    program: employee?.designation ?? "",
     framework_id: frameworkId,
   })
   return { id: created[0].id }
